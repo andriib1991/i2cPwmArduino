@@ -3,78 +3,59 @@
 
 #define MOTORS_NUMBER 6
 #define SLAVE_ADDRESS 0x05
+#define I2C_BUFFER_SIZE
 
-Servo myservo[MOTORS_NUMBER];
-int pos = 0;
-int angle = 0;
-int del = 50;
-
-uint8_t receivedNumbers[10];
-int state = 0;
+Servo servoMotors[MOTORS_NUMBER];
+int servoMotorsAngels[MOTORS_NUMBER];
 
 // the setup function runs once when you press reset or power the board
 void setup()
 {
     Serial.begin(9600);
 
-    myservo[0].attach(3);
-    myservo[1].attach(5);
-    myservo[2].attach(6);
-    myservo[3].attach(9);
-    myservo[4].attach(10);
-    myservo[5].attach(11);
+    servoMotors[0].attach(3);
+    servoMotors[1].attach(5);
+    servoMotors[2].attach(6);
+    servoMotors[3].attach(9);
+    servoMotors[4].attach(10);
+    servoMotors[5].attach(11);
 
     Wire.begin(SLAVE_ADDRESS);
-    Wire.onReceive(receiveData);
+    Wire.onReceive(i2cReceiveData);
 }
 
 // the loop function runs over and over again forever
 void loop()
 {
-    // for(pos = 0; pos < 180; pos += 5) {
-    //     for(int current_motor = 0; current_motor < 1; current_motor++) {
-    //     // for(int current_motor = 0; current_motor < MOTORS_NUMBER; current_motor++) {
-    //         myservo[current_motor].write(pos + (current_motor * 10));
-    //         delay(del);
-    //     }
-    // }
-    // for(pos = 180; pos>=1; pos-=5) {
-    //     for(int current_motor = 0; current_motor < 1; current_motor++) {
-    //     // for(int current_motor = 0; current_motor < MOTORS_NUMBER; current_motor++) {
-    //         myservo[current_motor].write(pos + current_motor * 10);
-    //         delay(del);
-    //     }
-    // }
-    myservo[0].write(angle);
-    myservo[1].write(angle);
     delay(100);
 }
 
 //callback for received data via I2C
-void receiveData(int byteCount)
+void i2cReceiveData(int byteCount)
 {
+    uint8_t receivedMessage[I2C_BUFFER_SIZE];
     int i = 0;
     while (Wire.available())
     {
-        Serial.print("i=");
-        Serial.println(i);
-
-        receivedNumbers[i] = (uint8_t)Wire.read();
-        Serial.print("receivedNumbers[i]=");
-        Serial.println(receivedNumbers[i]);
+        receivedMessage[i] = (uint8_t)Wire.read();
+        // Serial.printf("receivedMessage[i]=%d\n", receivedMessage[i]);
         i++;
     }
 
-    angle =  (long)receivedNumbers[2] * 256 + (long)receivedNumbers[3];
-    del = angle;
-    //myservo[0].write(angle);
-    Serial.print(angle);
-    //Serial.print(angle.toInt());
-    //Serial.print(number);
+    if (i < 4)
+    {
+        return;
+    }
+    // Serial.printf("receivedMessage=[%d, %d, %d, %d]\n", receivedMessage[0], receivedMessage[1], receivedMessage[2], receivedMessage[3]);
+
+    int servoMotorIndex = receivedMessage[0];
+    int turningAngle =  receivedMessage[2] * 256 + receivedMessage[3];
+    // Serial.printf("servo motor index: %d\nturning angle:%d\n", servoMotorIndex, turningAngle);
+    servoMotors[servoMotorIndex] = turningAngle;
 }
 
 // callback for sending data via I2C
-void sendData()
+void i2cSendData()
 {
     Wire.write(42);
 }
