@@ -3,7 +3,7 @@
 
 #define MOTORS_NUMBER 6
 #define SLAVE_ADDRESS 0x05
-#define I2C_BUFFER_SIZE
+#define I2C_BUFFER_SIZE 50
 
 Servo servoMotors[MOTORS_NUMBER];
 int servoMotorsAngels[MOTORS_NUMBER];
@@ -38,7 +38,8 @@ void i2cReceiveData(int byteCount)
     while (Wire.available())
     {
         receivedMessage[i] = (uint8_t)Wire.read();
-        // Serial.printf("receivedMessage[i]=%d\n", receivedMessage[i]);
+        Serial.print("receivedMessage[i]=");
+        Serial.println(receivedMessage[i]);
         i++;
     }
 
@@ -46,12 +47,14 @@ void i2cReceiveData(int byteCount)
     {
         return;
     }
-    // Serial.printf("receivedMessage=[%d, %d, %d, %d]\n", receivedMessage[0], receivedMessage[1], receivedMessage[2], receivedMessage[3]);
 
     int servoMotorIndex = receivedMessage[0];
     int turningAngle =  receivedMessage[2] * 256 + receivedMessage[3];
-    // Serial.printf("servo motor index: %d\nturning angle:%d\n", servoMotorIndex, turningAngle);
-    servoMotors[servoMotorIndex] = turningAngle;
+    Serial.print("servo motor index: ");
+    Serial.println(servoMotorIndex);
+    Serial.print("turning angle: ");
+    Serial.println(turningAngle);
+    servoMotors[servoMotorIndex].write(turningAngle);
 }
 
 // callback for sending data via I2C
